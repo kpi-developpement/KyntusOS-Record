@@ -1,0 +1,13 @@
+package com.kyntus.operatingsystem;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class OperatingsystemApplicationTests {
+
+	@Test
+	void contextLoads() {
+	}
+
+}

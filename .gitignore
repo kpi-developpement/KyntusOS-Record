@@ -1,0 +1,6 @@
+# .gitignore
+node_modules/
+.next/
+target/
+*.jar
+.env

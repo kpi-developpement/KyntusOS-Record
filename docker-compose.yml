@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # 1. La Base de Données (PostgreSQL)
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: kyntus_db
+    restart: always
+    environment:
+      POSTGRES_USER: kyntus_user
+      POSTGRES_PASSWORD: kyntus_password
+      POSTGRES_DB: kyntus_os
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data # Bach l'Data mat-mshich mli t-teffi Docker
+    networks:
+      - kyntus-network
+
+  # 2. Le Backend (Spring Boot)
+  backend:
+    build:
+      context: ./backend # Smiyt dossier backend dyalek
+      dockerfile: Dockerfile
+    container_name: kyntus_backend
+    restart: always
+    ports:
+      - "8083:8083" # Le Port li kheddam bih f logs dyalek
+    environment:
+      # Nlinkiw l'backend m3a l'Postgres lli 3ad sawebna lfoq
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/kyntus_os
+      - SPRING_DATASOURCE_USERNAME=kyntus_user
+      - SPRING_DATASOURCE_PASSWORD=kyntus_password
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+    depends_on:
+      - postgres-db
+    networks:
+      - kyntus-network
+
+  # 3. Le Frontend (Next.js)
+  frontend:
+    build:
+      context: ./frontend # Smiyt dossier frontend dyalek
+      dockerfile: Dockerfile
+    container_name: kyntus_frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      # L'url dyal l'API bach y-3eyet l'Backend (f Docker awla host)
+      - NEXT_PUBLIC_API_URL=http://localhost:8083
+    depends_on:
+      - backend
+    networks:
+      - kyntus-network
+
+# L'Réseau lli ghay-jem3hom (bach y-hdro m3a ba3diyathom)
+networks:
+  kyntus-network:
+    driver: bridge
+
+# Volumes bach t-sauvegarder Data dyal Postgres
+volumes:
+  pgdata:
