@@ -1,61 +1,42 @@
 version: '3.8'
 
 services:
-  # 1. La Base de Données (PostgreSQL)
-  postgres-db:
-    image: postgres:15-alpine
-    container_name: kyntus_db
-    restart: always
-    environment:
-      POSTGRES_USER: kyntus_user
-      POSTGRES_PASSWORD: kyntus_password
-      POSTGRES_DB: kyntus_os
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    networks:
-      - kyntus-network
-
-  # 2. Le Backend (Spring Boot 3la 8082)
+  # 1. Le Backend (Spring Boot - M-réglé 3la 8083)
   backend:
     build:
-      context: ./operatingsystem # 🔥 THE FIX: Smiyt l'dossier s7i7a dyal Backend
+      context: ./operatingsystem
       dockerfile: Dockerfile
-    container_name: kyntus_backend
+    container_name: kyntus_record_backend
     restart: always
     ports:
-      - "8082:8082" 
+      - "8083:8083" # 🔥 App 2 Backend f 8083
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/kyntus_os
+      # 🔥 CONNECTION M3A L'DATABASE DYAL APP 1:
+      # 172.17.0.1 kat-wssel nishan l'bab 5432 lli m7loul f l'Serveur (10.10.10.50)
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://172.17.0.1:5432/kyntus_db?reWriteBatchedInserts=true
       - SPRING_DATASOURCE_USERNAME=kyntus_user
       - SPRING_DATASOURCE_PASSWORD=kyntus_password
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
-    depends_on:
-      - postgres-db
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=none
     networks:
-      - kyntus-network
+      - kyntus-record-network
 
-  # 3. Le Frontend (Next.js 3la 3030)
+  # 2. Le Frontend (Next.js - M-réglé 3la 3030)
   frontend:
     build:
-      context: ./kyntus-os-frontend # 🔥 THE FIX: Smiyt l'dossier s7i7a dyal Frontend
+      context: ./kyntus-os-frontend
       dockerfile: Dockerfile
-    container_name: kyntus_frontend
+    container_name: kyntus_record_frontend
     restart: always
     ports:
-      - "3030:3000"
+      - "3030:3000" # 🔥 App 2 Frontend f 3030
     environment:
-      # BDDEL "IP_DYAL_SERVEUR" b l'IP dyal l'serveur dyal charika
-      - NEXT_PUBLIC_API_URL=http://IP_DYAL_SERVEUR:8082
+      # 🔥 THE NEXUS LINK: L'IP s7i7 dyal l'VPS bach Chrome y3ref Tri9 l'Backend
+      - NEXT_PUBLIC_API_URL=http://10.10.10.50:8083
     depends_on:
       - backend
     networks:
-      - kyntus-network
+      - kyntus-record-network
 
 networks:
-  kyntus-network:
+  kyntus-record-network:
     driver: bridge
-
-volumes:
-  pgdata:
