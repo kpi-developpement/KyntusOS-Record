@@ -13,21 +13,20 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data # Bach l'Data mat-mshich mli t-teffi Docker
+      - pgdata:/var/lib/postgresql/data
     networks:
       - kyntus-network
 
-  # 2. Le Backend (Spring Boot)
+  # 2. Le Backend (Spring Boot 3la 8082)
   backend:
     build:
-      context: ./backend # Smiyt dossier backend dyalek
+      context: ./backend
       dockerfile: Dockerfile
     container_name: kyntus_backend
     restart: always
     ports:
-      - "8083:8083" # Le Port li kheddam bih f logs dyalek
+      - "8082:8082" # 🔥 L'Backend m-pluggé f 8082
     environment:
-      # Nlinkiw l'backend m3a l'Postgres lli 3ad sawebna lfoq
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/kyntus_os
       - SPRING_DATASOURCE_USERNAME=kyntus_user
       - SPRING_DATASOURCE_PASSWORD=kyntus_password
@@ -37,28 +36,27 @@ services:
     networks:
       - kyntus-network
 
-  # 3. Le Frontend (Next.js)
+  # 3. Le Frontend (Next.js 3la 3030)
   frontend:
     build:
-      context: ./frontend # Smiyt dossier frontend dyalek
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: kyntus_frontend
     restart: always
     ports:
-      - "3000:3000"
+      - "3030:3000" # 🔥 L'Frontend ghay-ban l'berraniya f 3030
     environment:
-      # L'url dyal l'API bach y-3eyet l'Backend (f Docker awla host)
-      - NEXT_PUBLIC_API_URL=http://localhost:8083
+      # 🔥 CONNECTION BLINDÉE: Hna fin kay-tla9aw! 
+      # BDDEL "IP_DYAL_SERVEUR" b l'IP dyal l'serveur dyal charika
+      - NEXT_PUBLIC_API_URL=http://IP_DYAL_SERVEUR:8082
     depends_on:
       - backend
     networks:
       - kyntus-network
 
-# L'Réseau lli ghay-jem3hom (bach y-hdro m3a ba3diyathom)
 networks:
   kyntus-network:
     driver: bridge
 
-# Volumes bach t-sauvegarder Data dyal Postgres
 volumes:
   pgdata:
