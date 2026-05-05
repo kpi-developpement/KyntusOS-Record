@@ -20,12 +20,12 @@ services:
   # 2. Le Backend (Spring Boot 3la 8082)
   backend:
     build:
-      context: ./backend
+      context: ./operatingsystem # 🔥 THE FIX: Smiyt l'dossier s7i7a dyal Backend
       dockerfile: Dockerfile
     container_name: kyntus_backend
     restart: always
     ports:
-      - "8082:8082" # 🔥 L'Backend m-pluggé f 8082
+      - "8082:8082" 
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/kyntus_os
       - SPRING_DATASOURCE_USERNAME=kyntus_user
@@ -39,14 +39,13 @@ services:
   # 3. Le Frontend (Next.js 3la 3030)
   frontend:
     build:
-      context: ./frontend
+      context: ./kyntus-os-frontend # 🔥 THE FIX: Smiyt l'dossier s7i7a dyal Frontend
       dockerfile: Dockerfile
     container_name: kyntus_frontend
     restart: always
     ports:
-      - "3030:3000" # 🔥 L'Frontend ghay-ban l'berraniya f 3030
+      - "3030:3000"
     environment:
-      # 🔥 CONNECTION BLINDÉE: Hna fin kay-tla9aw! 
       # BDDEL "IP_DYAL_SERVEUR" b l'IP dyal l'serveur dyal charika
       - NEXT_PUBLIC_API_URL=http://IP_DYAL_SERVEUR:8082
     depends_on:
