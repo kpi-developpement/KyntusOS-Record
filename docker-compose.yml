@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # 1. Le Backend (Spring Boot - M-réglé 3la 8083)
+  # 1. Le Backend (Spring Boot)
   backend:
     build:
       context: ./operatingsystem
@@ -9,10 +9,8 @@ services:
     container_name: kyntus_record_backend
     restart: always
     ports:
-      - "8083:8083" # 🔥 App 2 Backend f 8083
+      - "8083:8083"
     environment:
-      # 🔥 CONNECTION M3A L'DATABASE DYAL APP 1:
-      # 172.17.0.1 kat-wssel nishan l'bab 5432 lli m7loul f l'Serveur (10.10.10.50)
       - SPRING_DATASOURCE_URL=jdbc:postgresql://172.17.0.1:5432/kyntus_db?reWriteBatchedInserts=true
       - SPRING_DATASOURCE_USERNAME=kyntus_user
       - SPRING_DATASOURCE_PASSWORD=kyntus_password
@@ -20,17 +18,19 @@ services:
     networks:
       - kyntus-record-network
 
-  # 2. Le Frontend (Next.js - M-réglé 3la 3030)
+  # 2. Le Frontend (Next.js)
   frontend:
     build:
       context: ./kyntus-os-frontend
       dockerfile: Dockerfile
+      # 🔥 THE FIX (LI NSYITI): Hna fin Docker kay-3ti l'IP l'Next.js wst l'Build!
+      args:
+        - NEXT_PUBLIC_API_URL=http://10.10.10.50:8083
     container_name: kyntus_record_frontend
     restart: always
     ports:
-      - "3030:3000" # 🔥 App 2 Frontend f 3030
+      - "3030:3000"
     environment:
-      # 🔥 THE NEXUS LINK: L'IP s7i7 dyal l'VPS bach Chrome y3ref Tri9 l'Backend
       - NEXT_PUBLIC_API_URL=http://10.10.10.50:8083
     depends_on:
       - backend
