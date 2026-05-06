@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # 1. Le Backend (Spring Boot)
+  # 1. Le Backend (Spring Boot - M-réglé 3la 8083)
   backend:
     build:
       context: ./operatingsystem
@@ -9,27 +9,28 @@ services:
     container_name: kyntus_record_backend
     restart: always
     ports:
-      - "8083:8083"
+      - "8083:8083" # 🔥 App 2 Backend f 8083 (App 1 rah f 8082)
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://172.17.0.1:5432/kyntus_db?reWriteBatchedInserts=true
+      # 🔥 THE BULLETPROOF CONNECTION: Kan-targétiw l'IP l'79i9i dyal l'VPS nishan!
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://10.10.10.50:5432/kyntus_db?reWriteBatchedInserts=true
       - SPRING_DATASOURCE_USERNAME=kyntus_user
       - SPRING_DATASOURCE_PASSWORD=kyntus_password
       - SPRING_JPA_HIBERNATE_DDL_AUTO=none
     networks:
       - kyntus-record-network
 
-  # 2. Le Frontend (Next.js)
+  # 2. Le Frontend (Next.js - M-réglé 3la 3030)
   frontend:
     build:
       context: ./kyntus-os-frontend
       dockerfile: Dockerfile
-      # 🔥 THE FIX (LI NSYITI): Hna fin Docker kay-3ti l'IP l'Next.js wst l'Build!
+      # 🔥 INJECTION F WAQT L'BUILD: Bach y-dfen l'IP f JS
       args:
         - NEXT_PUBLIC_API_URL=http://10.10.10.50:8083
     container_name: kyntus_record_frontend
     restart: always
     ports:
-      - "3030:3000"
+      - "3030:3000" # 🔥 App 2 Frontend f 3030 (App 1 rah f 3000)
     environment:
       - NEXT_PUBLIC_API_URL=http://10.10.10.50:8083
     depends_on:
