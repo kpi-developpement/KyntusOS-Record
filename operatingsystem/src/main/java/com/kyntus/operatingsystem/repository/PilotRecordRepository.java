@@ -15,19 +15,19 @@ import java.util.List;
 @Repository
 public interface PilotRecordRepository extends JpaRepository<PilotRecord, Long> {
 
-    // Fetch Paginated
+    // Fetch Paginated (L'Affichage Front)
     @Query("SELECT p FROM PilotRecord p WHERE p.category = :category AND p.importYear = :year AND p.importMonth = :month AND UPPER(TRIM(p.version)) = UPPER(TRIM(:version))")
     Page<PilotRecord> findRecordsByCategoryDateAndVersion(@Param("category") String category, @Param("year") int year, @Param("month") int month, @Param("version") String version, Pageable pageable);
 
-    // Fetch V1 for Engine
+    // 🔥 THE TURBO FIX 1: Fetch V1 with Pagination for the Engine (10k by 10k)
     @Query("SELECT p FROM PilotRecord p WHERE p.category = :category AND p.importYear = :year AND p.importMonth = :month AND (UPPER(TRIM(p.version)) = 'V1' OR p.version IS NULL)")
-    List<PilotRecord> findAllV1RecordsByCategoryAndDate(@Param("category") String category, @Param("year") int year, @Param("month") int month);
+    Page<PilotRecord> findV1RecordsPageable(@Param("category") String category, @Param("year") int year, @Param("month") int month, Pageable pageable);
 
-    // Fetch columns
-    @Query(value = "SELECT DISTINCT jsonb_object_keys(dynamic_data) FROM pilot_records WHERE category = :category AND import_year = :year AND import_month = :month AND UPPER(TRIM(version)) = UPPER(TRIM(:version))", nativeQuery = true)
-    List<String> findDistinctDynamicColumns(@Param("category") String category, @Param("year") int year, @Param("month") int month, @Param("version") String version);
+    // 🔥 THE TURBO FIX 2: Fetch columns ultra-fast (Reads only 1 row instead of 34,000!)
+    @Query(value = "SELECT jsonb_object_keys(dynamic_data) FROM (SELECT dynamic_data FROM pilot_records WHERE category = :category AND import_year = :year AND import_month = :month AND UPPER(TRIM(version)) = UPPER(TRIM(:version)) LIMIT 1) t", nativeQuery = true)
+    List<String> findDistinctDynamicColumnsFast(@Param("category") String category, @Param("year") int year, @Param("month") int month, @Param("version") String version);
 
-    // 🔥 THE NUKE (DELETE ALL GHOST V2) 🔥
+    // THE NUKE (DELETE ALL GHOST V2)
     @Modifying
     @Transactional
     @Query("DELETE FROM PilotRecord p WHERE p.category = :category AND p.importYear = :year AND p.importMonth = :month AND UPPER(TRIM(p.version)) = 'V2'")

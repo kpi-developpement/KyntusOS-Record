@@ -1,8 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-const API_BASE = "http://localhost:8083/api/os/records/v1"; 
-// L'API jdida li gadina f l'Backend dyal l'calcul
-const BILLING_API = "http://localhost:8083/api/os/billing-engine"; 
+// 🔥 THE MATRIX FIX: Dynamic URL Resolution
+// 1. Kay-jbed l'IP mn l'Serveur (Docker Environment Variable)
+// 2. Ila mal9ahch (f l'Localhost dyalek), kay-dir Fallback l 8083
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8083";
+
+const API_BASE = `${BASE_URL}/api/os/records/v1`; 
+const BILLING_API = `${BASE_URL}/api/os/billing-engine`; 
 
 export const useColumns = (category: string, year: number, month: number, version: string = "V2") => {
   return useQuery({
