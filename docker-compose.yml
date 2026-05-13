@@ -11,6 +11,8 @@ services:
     environment:
       - SERVER_PORT=8082
       - SPRING_DATASOURCE_URL=jdbc:postgresql://10.10.10.50:5432/kyntus_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=waeloujdiastral481123456  # <-- T2ekked bli hada houwa s-sarout s7i7 d'l'DB
     restart: unless-stopped
     networks:
       - kyntus-network
@@ -20,7 +22,7 @@ services:
       context: ./kyntus-os-frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=http://10.10.10.50:8084   # 🔥 THE FIX HOUWA HADA
+        - NEXT_PUBLIC_API_URL=http://10.10.10.50:8084
     container_name: kyntus-os-frontend
     ports:
       - "3005:3000"
