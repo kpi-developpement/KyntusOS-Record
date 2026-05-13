@@ -1,44 +1,31 @@
 version: '3.8'
 
 services:
-  # 1. BACKEND (Spring Boot) - Kheddam f PC dyalek
   backend:
     build:
       context: ./operatingsystem
       dockerfile: Dockerfile
-    container_name: kyntus_local_backend
-    restart: always
+    container_name: operatingsystem
     ports:
-      - "8083:8083"
+      - "8083:8082" # L'moteur d l'backend kheddam f 8082 ldaakhel, w ghayban f 8083 3la berra
     environment:
-      # 🔥 CONNECTION NISHAN L'SERVEUR PROD (10.10.10.50)
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://10.10.10.50:5432/kyntus_db?reWriteBatchedInserts=true
-      - SPRING_DATASOURCE_USERNAME=kyntus_user
-      - SPRING_DATASOURCE_PASSWORD=kyntus_password
-      # ⚠️ CRITIQUE: 'none' bach Spring Boot f PC dyalek may-kherbe9ch awla ymsse7 les tables f Prod!
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=none
+      - SERVER_PORT=8082
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://10.10.10.50:5432/kyntus_db
+    restart: unless-stopped
     networks:
-      - kyntus-local-net
+      - kyntus-network
 
-  # 2. FRONTEND (Next.js) - Kheddam f PC dyalek
   frontend:
     build:
       context: ./kyntus-os-frontend
       dockerfile: Dockerfile
-      args:
-        # 🔥 Frontend f PC dyalek kay-3iyyet l'Backend lli f PC dyalek
-        - NEXT_PUBLIC_API_URL=http://localhost:8083
-    container_name: kyntus_local_frontend
-    restart: always
+    container_name: kyntus-os-frontend
     ports:
-      - "3030:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8083
-    depends_on:
-      - backend
+      - "3005:3000" # L'port 3000 mchdoud, 3tinah 3005 3la berra
+    restart: unless-stopped
     networks:
-      - kyntus-local-net
+      - kyntus-network
 
 networks:
-  kyntus-local-net:
+  kyntus-network:
     driver: bridge

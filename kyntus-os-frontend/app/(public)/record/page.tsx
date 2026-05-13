@@ -5,6 +5,8 @@ import Providers from "./ux/Providers";
 import { useColumns, useV1Records, useRunBillingEngine } from "./ux/useRecords";
 import { Activity, Search, Check, Layers, ChevronDown, Calendar, Hash, Folder, Zap, Database } from "lucide-react";
 import SmartTable from "./components/SmartTable";
+// 🔥 IMPORT DYAL L'MODAL
+import ExportModal from "./components/ExportModal";
 
 // --- CUSTOM SMOOTH DROPDOWN COMPONENT (TRANSFORMER GLOW EFFECT) ---
 const CustomSelect = ({ value, options, onChange, icon: Icon, placeholder, zIndexValue = 50 }: any) => {
@@ -115,7 +117,7 @@ function RecordDashboard() {
     { value: "SAV", label: "SAV - Service Client" },
     { value: "FTTH", label: "FTTH - Fibre Optique" }
   ];
-  const yearOptions = [2024, 2025, 2026].map(y => ({ value: y, label: `Année ${y}` }));
+  const yearOptions = [2024, 2025, 2026, 2027, 2028].map(y => ({ value: y, label: `Année ${y}` }));
   const monthOptions = Array.from({length: 12}, (_, i) => ({ value: i+1, label: `Mois ${String(i+1).padStart(2, '0')}` }));
   
   const versionOptions = [
@@ -143,46 +145,50 @@ function RecordDashboard() {
             </div>
           </div>
           
-          {/* 🤖🔥 BOUTON TRANSFORMER PRIME 🔥🤖 */}
-          <button 
-            onClick={handleRunEngine}
-            disabled={runEngine.isPending}
-            className="
-              relative overflow-hidden group
-              flex items-center gap-2 
-              bg-transparent border-2 border-blue-600 text-blue-600 
-              font-black text-sm uppercase tracking-widest px-8 py-3.5 rounded-xl
-              transition-all duration-300 ease-out
-              hover:text-white hover:border-transparent hover:shadow-[0_0_25px_rgba(37,99,235,0.6)]
-              active:scale-95 active:bg-gradient-to-r active:from-white active:to-blue-600 active:text-blue-900 active:border-white
-              disabled:opacity-50 disabled:hover:scale-100 disabled:hover:text-blue-600 disabled:hover:bg-transparent disabled:hover:shadow-none
-            "
-          >
-            {/* Effet dyal Sweep (T3mira) */}
-            <span className="absolute inset-0 bg-blue-600 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-[400ms] ease-[cubic-bezier(0.19,1,0.22,1)] z-0"></span>
+          {/* 🔥 LES BOUTONS D'ACTION HNA 🔥 */}
+          <div className="flex items-center gap-4">
             
-            {/* L'contenu dyal l'bouton (Z-10 bach yb9a lfo9 mn t3mira) */}
-            <span className="relative z-10 flex items-center gap-2">
-              {runEngine.isPending ? <Activity size={18} className="animate-spin" /> : <Zap size={18} className="fill-current" />}
-              {runEngine.isPending ? "Calculating Matrix..." : "Run Billing V2"}
-            </span>
-          </button>
+            {/* L'MODAL DYAL L'EXPORT */}
+            <ExportModal category={category} version={version} />
+
+            {/* 🤖🔥 BOUTON TRANSFORMER PRIME */}
+            <button 
+              onClick={handleRunEngine}
+              disabled={runEngine.isPending}
+              className="
+                relative overflow-hidden group
+                flex items-center gap-2 
+                bg-transparent border-2 border-blue-600 text-blue-600 
+                font-black text-sm uppercase tracking-widest px-8 py-3.5 rounded-xl
+                transition-all duration-300 ease-out
+                hover:text-white hover:border-transparent hover:shadow-[0_0_25px_rgba(37,99,235,0.6)]
+                active:scale-95 active:bg-gradient-to-r active:from-white active:to-blue-600 active:text-blue-900 active:border-white
+                disabled:opacity-50 disabled:hover:scale-100 disabled:hover:text-blue-600 disabled:hover:bg-transparent disabled:hover:shadow-none
+              "
+            >
+              <span className="absolute inset-0 bg-blue-600 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-[400ms] ease-[cubic-bezier(0.19,1,0.22,1)] z-0"></span>
+              <span className="relative z-10 flex items-center gap-2">
+                {runEngine.isPending ? <Activity size={18} className="animate-spin" /> : <Zap size={18} className="fill-current" />}
+                {runEngine.isPending ? "Calculating Matrix..." : "Run Billing V2"}
+              </span>
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-8 flex-1 relative z-[1000]">
           
-          <div className="xl:col-span-1 bg-white/60 backdrop-blur-2xl border border-white shadow-sm rounded-3xl p-7 h-fit relative z-[99999]">
+          <div className="xl:col-span-1 bg-white/60 backdrop-blur-2xl border border-white shadow-sm rounded-3xl p-7 h-fit relative z-[4999]">
             <div className="flex items-center gap-3 mb-6 relative z-10">
               <div className="w-1.5 h-6 bg-blue-600 rounded-full shadow-[0_0_10px_rgba(37,99,235,0.8)]"></div>
               <h2 className="text-slate-800 font-black tracking-widest text-sm">PERIOD MATRIX</h2>
             </div>
             
             <div className="flex flex-col gap-4 mb-8">
-              <CustomSelect value={version} options={versionOptions} onChange={(v: string) => {setVersion(v); setPage(0);}} icon={Database} zIndexValue={9999} />
-              <CustomSelect value={category} options={categoryOptions} onChange={(v: string) => {setCategory(v); setPage(0);}} icon={Folder} zIndexValue={9998} />
+              <CustomSelect value={version} options={versionOptions} onChange={(v: string) => {setVersion(v); setPage(0);}} icon={Database} zIndexValue={4998} />
+              <CustomSelect value={category} options={categoryOptions} onChange={(v: string) => {setCategory(v); setPage(0);}} icon={Folder} zIndexValue={4997} />
               <div className="flex gap-4">
-                <CustomSelect value={year} options={yearOptions} onChange={(v: number) => {setYear(v); setPage(0);}} icon={Calendar} zIndexValue={9997} />
-                <CustomSelect value={month} options={monthOptions} onChange={(v: number) => {setMonth(v); setPage(0);}} icon={Hash} zIndexValue={9996} />
+                <CustomSelect value={year} options={yearOptions} onChange={(v: number) => {setYear(v); setPage(0);}} icon={Calendar} zIndexValue={4996} />
+                <CustomSelect value={month} options={monthOptions} onChange={(v: number) => {setMonth(v); setPage(0);}} icon={Hash} zIndexValue={4995} />
               </div>
             </div>
 
@@ -233,13 +239,13 @@ function RecordDashboard() {
 
           <div className="xl:col-span-3 h-fit relative z-10">
              <SmartTable 
-                data={recordsData} 
-                loading={loadingRecords} 
-                page={page} 
-                setPage={setPage} 
-                pageSize={pageSize} 
-                setPageSize={setPageSize}
-                selectedColumns={selectedColumns}
+               data={recordsData} 
+               loading={loadingRecords} 
+               page={page} 
+               setPage={setPage} 
+               pageSize={pageSize} 
+               setPageSize={setPageSize}
+               selectedColumns={selectedColumns}
              />
           </div>
 
