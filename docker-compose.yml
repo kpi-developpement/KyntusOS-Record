@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: operatingsystem
     ports:
-      - "8083:8082" # L'moteur d l'backend kheddam f 8082 ldaakhel, w ghayban f 8083 3la berra
+      - "8084:8082" # L'port 8084 khawi 100%
     environment:
       - SERVER_PORT=8082
       - SPRING_DATASOURCE_URL=jdbc:postgresql://10.10.10.50:5432/kyntus_db
@@ -21,7 +21,7 @@ services:
       dockerfile: Dockerfile
     container_name: kyntus-os-frontend
     ports:
-      - "3005:3000" # L'port 3000 mchdoud, 3tinah 3005 3la berra
+      - "3005:3000" # L'port 3005 khawi 100%
     restart: unless-stopped
     networks:
       - kyntus-network

@@ -38,7 +38,7 @@ pipeline {
     post {
         success {
             echo "✅ DÉPLOIEMENT RÉUSSI ABRO!"
-            echo "🌐 Frontend: http://10.10.10.50:3005 | ⚙️ Backend: http://10.10.10.50:8083"
+            echo "🌐 Frontend: http://10.10.10.50:3005 | ⚙️ Backend: http://10.10.10.50:8084"
         }
         failure {
             echo "❌ ÉCHEC DU DÉPLOIEMENT. Dkhol l'logs dyal Jenkins t-vérifier."
