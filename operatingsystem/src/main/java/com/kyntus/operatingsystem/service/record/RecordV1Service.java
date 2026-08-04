@@ -31,24 +31,23 @@ public class RecordV1Service {
     private final EntityManager entityManager;
 
     public List<String> getAvailableColumns(String category, int year, int month, String version) {
-        // 🔥 THE FIX: Ila l'Frontend bgha V1, n-jbdou l'colonnes dyal l'V1 Dkiya
+        // 🔥 FRONTEND V1: Jbed l'colonnes dyal Validation Partenaire
         if ("V1".equalsIgnoreCase(version)) {
-            return repository.findDistinctV1ColumnsFast(category, year, month);
+            return repository.findDistinctV1DisplayColumnsFast(category, year, month);
         }
         return repository.findDistinctDynamicColumnsFast(category, year, month, version);
     }
 
     public Page<PilotRecord> getV1RecordsFiltered(String category, int year, int month, Pageable pageable, List<String> selectedColumns, String version) {
-        // 🔥 THE FIX: Ila l'Frontend bgha y-chouf V1, n-3tiwh l'V1 li fiha ghir VALIDATION_PARTENAIRE
+        // 🔥 FRONTEND V1: Affichi ghir Validation Partenaire
         if ("V1".equalsIgnoreCase(version)) {
-            return repository.findV1RecordsPageable(category, year, month, pageable);
+            return repository.findV1DisplayPageable(category, year, month, pageable);
         }
-        // Ila bgha V2, n-3tiwh l'V2 3adiya
         return repository.findRecordsByCategoryDateAndVersion(category, year, month, version, pageable);
     }
 
     // ==========================================================
-    // 🔥 MOTEUR D'AUTO-CALCUL MULTI-MOIS
+    // 🔥 MOTEUR D'AUTO-CALCUL MULTI-MOIS (Kay-khdem b'l'Code l'Assli)
     // ==========================================================
     public void calculatePeriod(String category, int startYear, int startMonth, int endYear, int endMonth) {
         int currentYear = startYear;
@@ -70,7 +69,7 @@ public class RecordV1Service {
     }
 
     // ==========================================================
-    // 🔥 THE ZERO-WRITE ENGINE D'EXPORT CSV (ON-THE-FLY + ESSENTIALS ONLY)
+    // 🔥 ZERO-WRITE EXPORT CSV (Kay-khdem b'l'Code l'Assli)
     // ==========================================================
     public byte[] generateCsvExportOnTheFly(String category, int startYear, int startMonth, int endYear, int endMonth) {
         int startPeriod = startYear * 100 + startMonth;
