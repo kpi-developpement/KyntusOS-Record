@@ -16,7 +16,7 @@ import java.util.List;
 public interface PilotRecordRepository extends JpaRepository<PilotRecord, Long> {
 
     // ==========================================================
-    // 🖥️ AFFICHAGE FRONTEND (Kay-b9a kima houwa l'V2)
+    // 🖥️ AFFICHAGE FRONTEND (V2 3adiya)
     // ==========================================================
     @Query("SELECT p FROM PilotRecord p WHERE p.category = :category AND p.importYear = :year AND p.importMonth = :month AND UPPER(TRIM(p.version)) = UPPER(TRIM(:version))")
     Page<PilotRecord> findRecordsByCategoryDateAndVersion(@Param("category") String category, @Param("year") int year, @Param("month") int month, @Param("version") String version, Pageable pageable);
@@ -26,6 +26,7 @@ public interface PilotRecordRepository extends JpaRepository<PilotRecord, Long> 
 
     // ==========================================================
     // 🔥 THE GRANDMASTER FETCH: First Match Ordered By Version (etat = EN_ATTENTE...)
+    // (Kheddama l'Affichage V1 w l'Moteur de Calcul)
     // ==========================================================
     @Query(value = "SELECT * FROM ( " +
             "  SELECT p.*, ROW_NUMBER() OVER (PARTITION BY p.eps_reference ORDER BY p.version ASC) as rn " +
@@ -48,6 +49,15 @@ public interface PilotRecordRepository extends JpaRepository<PilotRecord, Long> 
                     ") c",
             nativeQuery = true)
     Page<PilotRecord> findV1RecordsPageable(@Param("category") String category, @Param("year") int year, @Param("month") int month, Pageable pageable);
+
+    // 🔥 Jbed les colonnes dyal V1 s7i7a l'Frontend
+    @Query(value = "SELECT DISTINCT jsonb_object_keys(dynamic_data) FROM pilot_records " +
+            "WHERE category = :category " +
+            "AND import_year = :year " +
+            "AND import_month = :month " +
+            "AND (source_file IS NULL OR source_file != 'KYNTUS_BILLING_ENGINE') " +
+            "AND dynamic_data->>'etat' ILIKE '%EN_ATTENTE_VALIDATION_PARTENAIRE%'", nativeQuery = true)
+    List<String> findDistinctV1ColumnsFast(@Param("category") String category, @Param("year") int year, @Param("month") int month);
 
     // ==========================================================
     // 🔥 ZERO-WRITE EXPORT: First Match Ordered By Version (Multi-mois)
@@ -83,7 +93,7 @@ public interface PilotRecordRepository extends JpaRepository<PilotRecord, Long> 
             "AND (import_year * 100 + import_month) >= :startPeriod " +
             "AND (import_year * 100 + import_month) <= :endPeriod " +
             "AND (source_file IS NULL OR source_file != 'KYNTUS_BILLING_ENGINE') " +
-            "AND p.dynamic_data->>'etat' ILIKE '%EN_ATTENTE_VALIDATION_PARTENAIRE%'", nativeQuery = true)
+            "AND dynamic_data->>'etat' ILIKE '%EN_ATTENTE_VALIDATION_PARTENAIRE%'", nativeQuery = true)
     List<String> findDistinctV1ColumnsForExport(
             @Param("category") String category,
             @Param("startPeriod") int startPeriod,

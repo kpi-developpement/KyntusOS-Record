@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort; // 🔥 L'IMPORT JDID LI ZEDNA BACH Y-RETTEB
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -31,10 +31,19 @@ public class RecordV1Service {
     private final EntityManager entityManager;
 
     public List<String> getAvailableColumns(String category, int year, int month, String version) {
+        // 🔥 THE FIX: Ila l'Frontend bgha V1, n-jbdou l'colonnes dyal l'V1 Dkiya
+        if ("V1".equalsIgnoreCase(version)) {
+            return repository.findDistinctV1ColumnsFast(category, year, month);
+        }
         return repository.findDistinctDynamicColumnsFast(category, year, month, version);
     }
 
     public Page<PilotRecord> getV1RecordsFiltered(String category, int year, int month, Pageable pageable, List<String> selectedColumns, String version) {
+        // 🔥 THE FIX: Ila l'Frontend bgha y-chouf V1, n-3tiwh l'V1 li fiha ghir VALIDATION_PARTENAIRE
+        if ("V1".equalsIgnoreCase(version)) {
+            return repository.findV1RecordsPageable(category, year, month, pageable);
+        }
+        // Ila bgha V2, n-3tiwh l'V2 3adiya
         return repository.findRecordsByCategoryDateAndVersion(category, year, month, version, pageable);
     }
 
@@ -69,18 +78,12 @@ public class RecordV1Service {
 
         log.info("📥 [ZERO-WRITE EXPORT] Démarrage de l'export à la volée pour {} - Période: {} à {}", category, startPeriod, endPeriod);
 
-        // 🔥 LA LISTE DES COLONNES ESSENTIELLES
         List<String> colonnesEssentielles = Arrays.asList(
-                // 1. Inputs de base
                 "INSTALLATION", "MATERIEL", "MES", "SUPPORT", "LOGISTIQUE", "DEPLACEMENT",
-
-                // 2. Part Kyntus
                 "Forfait INST Kyntus", "Prix forfait INST Kyntus",
                 "Forfait INST Support Kyntus ", "Prix Forfait INST support Kyntus",
                 "Forfait INTST- Kyntus", "Prix Forfait INTST Kyntus",
                 "Materiel prix2", "MES22 Kyntus", "Prix Forfait MES Kyntus", "Mt Kyntus",
-
-                // 3. Part Sous-Traitant (SST)
                 "Forfait INST SST", "Prix Forfait SST", "Materiel prix",
                 "MES STT", "Prix Forfait MES SST", "Forfait Logistique SST",
                 "Prix Forfait Logistique SST", "Mt SST"
@@ -88,28 +91,21 @@ public class RecordV1Service {
 
         StringBuilder csv = new StringBuilder();
 
-        // 1. L'Header dyal l'Excel
         csv.append("ID;EPS_REFERENCE;CATEGORY;YEAR;MONTH;VERSION;");
         for (String col : colonnesEssentielles) {
             csv.append(col).append(";");
         }
         csv.append("\n");
 
-        // 2. Pagination w Calcul fl RAM
         int pageNumber = 0;
         int pageSize = 5000;
         Page<PilotRecord> pageData;
 
         do {
-            // 🔥 THE FIX: Zedna Sort.by("id").ascending() bach l'base de données te3tina dakchi mretteb
-            // Hakka moustahil y-dupliqui chi EPS awla y-zgel chi wa7ed!
             Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("id").ascending());
-
             pageData = repository.findV1RecordsForExportPageable(category, startPeriod, endPeriod, pageable);
 
             for (PilotRecord v1Record : pageData.getContent()) {
-
-                // Calcul Dynamique
                 Map<String, Object> v2Data;
                 if ("SAV".equalsIgnoreCase(category)) {
                     v2Data = savRuleEngine.applyBillingRules(v1Record.getDynamicData());
@@ -119,7 +115,6 @@ public class RecordV1Service {
                     v2Data = v1Record.getDynamicData();
                 }
 
-                // Info Statiques
                 csv.append(v1Record.getId() != null ? v1Record.getId() : "").append(";");
                 csv.append(v1Record.getEpsReference() != null ? v1Record.getEpsReference() : "").append(";");
                 csv.append(v1Record.getCategory() != null ? v1Record.getCategory() : "").append(";");
@@ -127,14 +122,13 @@ public class RecordV1Service {
                 csv.append(v1Record.getImportMonth() != null ? v1Record.getImportMonth() : "").append(";");
                 csv.append("V2;");
 
-                // Info Dynamiques (Filtre par liste essentielle)
                 for (String col : colonnesEssentielles) {
                     if (v2Data != null && v2Data.containsKey(col)) {
                         Object val = v2Data.get(col);
                         String valStr = val != null ? val.toString().replace(";", ",") : "";
                         csv.append(valStr).append(";");
                     } else {
-                        csv.append(";"); // Vide ila makantch
+                        csv.append(";");
                     }
                 }
                 csv.append("\n");
@@ -142,13 +136,10 @@ public class RecordV1Service {
 
             log.info("✅ [ZERO-WRITE EXPORT] Lot {} calculé et exporté ({} lignes)", pageNumber + 1, pageData.getNumberOfElements());
             pageNumber++;
-
-            // N-khewiw l'RAM dyal Hibernate be3d kola lot!
             entityManager.clear();
 
         } while (pageData.hasNext());
 
-        // 3. BOM l'UTF-8
         byte[] bom = new byte[] { (byte)0xEF, (byte)0xBB, (byte)0xBF };
         byte[] csvBytes = csv.toString().getBytes(StandardCharsets.UTF_8);
         byte[] finalBytes = new byte[bom.length + csvBytes.length];
