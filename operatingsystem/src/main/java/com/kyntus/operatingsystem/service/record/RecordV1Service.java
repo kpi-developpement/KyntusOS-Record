@@ -67,7 +67,7 @@ public class RecordV1Service {
     }
 
     // ==========================================================
-    // 🔥 ZERO-WRITE EXPORT CSV
+    // 🔥 ZERO-WRITE EXPORT CSV (FORMAT EXCEL FR + 2 DECIMALES)
     // ==========================================================
     public byte[] generateCsvExportOnTheFly(String category, int startYear, int startMonth, int endYear, int endMonth) {
         int startPeriod = startYear * 100 + startMonth;
@@ -75,7 +75,9 @@ public class RecordV1Service {
 
         log.info("📥 [ZERO-WRITE EXPORT] Démarrage de l'export à la volée pour {} - Période: {} à {}", category, startPeriod, endPeriod);
 
+        // 🔥 THE FIX: Zedna "periode" w "GOULOTTE" f l'Export
         List<String> colonnesEssentielles = Arrays.asList(
+                "periode", "GOULOTTE",
                 "INSTALLATION", "MATERIEL", "MES", "SUPPORT", "LOGISTIQUE", "DEPLACEMENT",
                 "Forfait INST Kyntus", "Prix forfait INST Kyntus",
                 "Forfait INST Support Kyntus ", "Prix Forfait INST support Kyntus",
@@ -88,6 +90,7 @@ public class RecordV1Service {
 
         StringBuilder csv = new StringBuilder();
 
+        // Header
         csv.append("ID;EPS_REFERENCE;CATEGORY;YEAR;MONTH;VERSION;");
         for (String col : colonnesEssentielles) {
             csv.append(col).append(";");
@@ -122,7 +125,17 @@ public class RecordV1Service {
                 for (String col : colonnesEssentielles) {
                     if (v2Data != null && v2Data.containsKey(col)) {
                         Object val = v2Data.get(col);
-                        String valStr = val != null ? val.toString().replace(";", ",") : "";
+                        String valStr = "";
+
+                        if (val != null) {
+                            // 🔥 THE FIX EXCEL FR: Format avec virgule + EXACTEMENT 2 chiffres après la virgule
+                            if (val instanceof Number) {
+                                valStr = String.format(java.util.Locale.FRENCH, "%.2f", ((Number) val).doubleValue());
+                            } else {
+                                // Ila kan texte 3adi (b7al GOULOTTE awla periode)
+                                valStr = val.toString().replace(";", ",");
+                            }
+                        }
                         csv.append(valStr).append(";");
                     } else {
                         csv.append(";");
