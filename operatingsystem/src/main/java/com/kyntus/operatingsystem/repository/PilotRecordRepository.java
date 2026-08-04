@@ -16,7 +16,7 @@ import java.util.List;
 public interface PilotRecordRepository extends JpaRepository<PilotRecord, Long> {
 
     // ==========================================================
-    // 🖥️ AFFICHAGE FRONTEND (Kay-b9a kima houwa)
+    // 🖥️ AFFICHAGE FRONTEND (Kay-b9a kima houwa l'V2)
     // ==========================================================
     @Query("SELECT p FROM PilotRecord p WHERE p.category = :category AND p.importYear = :year AND p.importMonth = :month AND UPPER(TRIM(p.version)) = UPPER(TRIM(:version))")
     Page<PilotRecord> findRecordsByCategoryDateAndVersion(@Param("category") String category, @Param("year") int year, @Param("month") int month, @Param("version") String version, Pageable pageable);
@@ -25,7 +25,7 @@ public interface PilotRecordRepository extends JpaRepository<PilotRecord, Long> 
     List<String> findDistinctDynamicColumnsFast(@Param("category") String category, @Param("year") int year, @Param("month") int month, @Param("version") String version);
 
     // ==========================================================
-    // 🔥 THE GRANDMASTER FETCH: First Match Ordered By Version (BULLETPROOF JSON SEARCH)
+    // 🔥 THE GRANDMASTER FETCH: First Match Ordered By Version (etat = EN_ATTENTE...)
     // ==========================================================
     @Query(value = "SELECT * FROM ( " +
             "  SELECT p.*, ROW_NUMBER() OVER (PARTITION BY p.eps_reference ORDER BY p.version ASC) as rn " +
@@ -34,7 +34,7 @@ public interface PilotRecordRepository extends JpaRepository<PilotRecord, Long> 
             "    AND p.import_year = :year " +
             "    AND p.import_month = :month " +
             "    AND (p.source_file IS NULL OR p.source_file != 'KYNTUS_BILLING_ENGINE') " +
-            "    AND p.dynamic_data::text ILIKE '%EN_ATTENTE_VALIDATION_PARTENAIRE%' " +
+            "    AND p.dynamic_data->>'etat' ILIKE '%EN_ATTENTE_VALIDATION_PARTENAIRE%' " +
             ") t WHERE t.rn = 1",
             countQuery = "SELECT COUNT(*) FROM ( " +
                     "  SELECT p.eps_reference " +
@@ -43,7 +43,7 @@ public interface PilotRecordRepository extends JpaRepository<PilotRecord, Long> 
                     "    AND p.import_year = :year " +
                     "    AND p.import_month = :month " +
                     "    AND (p.source_file IS NULL OR p.source_file != 'KYNTUS_BILLING_ENGINE') " +
-                    "    AND p.dynamic_data::text ILIKE '%EN_ATTENTE_VALIDATION_PARTENAIRE%' " +
+                    "    AND p.dynamic_data->>'etat' ILIKE '%EN_ATTENTE_VALIDATION_PARTENAIRE%' " +
                     "  GROUP BY p.eps_reference " +
                     ") c",
             nativeQuery = true)
@@ -59,7 +59,7 @@ public interface PilotRecordRepository extends JpaRepository<PilotRecord, Long> 
             "    AND (p.import_year * 100 + p.import_month) >= :startPeriod " +
             "    AND (p.import_year * 100 + p.import_month) <= :endPeriod " +
             "    AND (p.source_file IS NULL OR p.source_file != 'KYNTUS_BILLING_ENGINE') " +
-            "    AND p.dynamic_data::text ILIKE '%EN_ATTENTE_VALIDATION_PARTENAIRE%' " +
+            "    AND p.dynamic_data->>'etat' ILIKE '%EN_ATTENTE_VALIDATION_PARTENAIRE%' " +
             ") t WHERE t.rn = 1",
             countQuery = "SELECT COUNT(*) FROM ( " +
                     "  SELECT p.eps_reference " +
@@ -68,7 +68,7 @@ public interface PilotRecordRepository extends JpaRepository<PilotRecord, Long> 
                     "    AND (p.import_year * 100 + p.import_month) >= :startPeriod " +
                     "    AND (p.import_year * 100 + p.import_month) <= :endPeriod " +
                     "    AND (p.source_file IS NULL OR p.source_file != 'KYNTUS_BILLING_ENGINE') " +
-                    "    AND p.dynamic_data::text ILIKE '%EN_ATTENTE_VALIDATION_PARTENAIRE%' " +
+                    "    AND p.dynamic_data->>'etat' ILIKE '%EN_ATTENTE_VALIDATION_PARTENAIRE%' " +
                     "  GROUP BY p.eps_reference " +
                     ") c",
             nativeQuery = true)
@@ -83,7 +83,7 @@ public interface PilotRecordRepository extends JpaRepository<PilotRecord, Long> 
             "AND (import_year * 100 + import_month) >= :startPeriod " +
             "AND (import_year * 100 + import_month) <= :endPeriod " +
             "AND (source_file IS NULL OR source_file != 'KYNTUS_BILLING_ENGINE') " +
-            "AND dynamic_data::text ILIKE '%EN_ATTENTE_VALIDATION_PARTENAIRE%'", nativeQuery = true)
+            "AND p.dynamic_data->>'etat' ILIKE '%EN_ATTENTE_VALIDATION_PARTENAIRE%'", nativeQuery = true)
     List<String> findDistinctV1ColumnsForExport(
             @Param("category") String category,
             @Param("startPeriod") int startPeriod,
