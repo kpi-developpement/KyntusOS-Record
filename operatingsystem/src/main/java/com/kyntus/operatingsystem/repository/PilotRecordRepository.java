@@ -16,7 +16,7 @@ import java.util.List;
 public interface PilotRecordRepository extends JpaRepository<PilotRecord, Long> {
 
     // ==========================================================
-    // 🖥️ AFFICHAGE FRONTEND (Ma 9esnahach - Kat-b9a kima hiya)
+    // 🖥️ AFFICHAGE FRONTEND (Kay-b9a kima houwa)
     // ==========================================================
     @Query("SELECT p FROM PilotRecord p WHERE p.category = :category AND p.importYear = :year AND p.importMonth = :month AND UPPER(TRIM(p.version)) = UPPER(TRIM(:version))")
     Page<PilotRecord> findRecordsByCategoryDateAndVersion(@Param("category") String category, @Param("year") int year, @Param("month") int month, @Param("version") String version, Pageable pageable);
@@ -25,7 +25,7 @@ public interface PilotRecordRepository extends JpaRepository<PilotRecord, Long> 
     List<String> findDistinctDynamicColumnsFast(@Param("category") String category, @Param("year") int year, @Param("month") int month, @Param("version") String version);
 
     // ==========================================================
-    // 🔥 THE NEW ENGINE FETCH: First Match Ordered By Version
+    // 🔥 THE GRANDMASTER FETCH: First Match Ordered By Version (Smart JSON)
     // ==========================================================
     @Query(value = "SELECT * FROM ( " +
             "  SELECT p.*, ROW_NUMBER() OVER (PARTITION BY p.eps_reference ORDER BY p.version ASC) as rn " +
@@ -34,7 +34,7 @@ public interface PilotRecordRepository extends JpaRepository<PilotRecord, Long> 
             "    AND p.import_year = :year " +
             "    AND p.import_month = :month " +
             "    AND (p.source_file IS NULL OR p.source_file != 'KYNTUS_BILLING_ENGINE') " +
-            "    AND UPPER(TRIM(p.dynamic_data->>'Etat')) = 'EN_ATTENTE_VALIDATION_PARTENAIRE' " +
+            "    AND UPPER(TRIM(COALESCE(p.dynamic_data->>'Etat', p.dynamic_data->>'etat', p.dynamic_data->>'ETAT', p.dynamic_data->>'État'))) LIKE '%EN%ATTENTE%VALIDATION%PARTENAIRE%' " +
             ") t WHERE t.rn = 1",
             countQuery = "SELECT COUNT(*) FROM ( " +
                     "  SELECT p.eps_reference " +
@@ -43,14 +43,14 @@ public interface PilotRecordRepository extends JpaRepository<PilotRecord, Long> 
                     "    AND p.import_year = :year " +
                     "    AND p.import_month = :month " +
                     "    AND (p.source_file IS NULL OR p.source_file != 'KYNTUS_BILLING_ENGINE') " +
-                    "    AND UPPER(TRIM(p.dynamic_data->>'Etat')) = 'EN_ATTENTE_VALIDATION_PARTENAIRE' " +
+                    "    AND UPPER(TRIM(COALESCE(p.dynamic_data->>'Etat', p.dynamic_data->>'etat', p.dynamic_data->>'ETAT', p.dynamic_data->>'État'))) LIKE '%EN%ATTENTE%VALIDATION%PARTENAIRE%' " +
                     "  GROUP BY p.eps_reference " +
                     ") c",
             nativeQuery = true)
     Page<PilotRecord> findV1RecordsPageable(@Param("category") String category, @Param("year") int year, @Param("month") int month, Pageable pageable);
 
     // ==========================================================
-    // 🔥 ZERO-WRITE EXPORT NEW FETCH: Multi-mois m3a l'Etat
+    // 🔥 ZERO-WRITE EXPORT: First Match Ordered By Version (Multi-mois)
     // ==========================================================
     @Query(value = "SELECT * FROM ( " +
             "  SELECT p.*, ROW_NUMBER() OVER (PARTITION BY p.eps_reference ORDER BY p.version ASC) as rn " +
@@ -59,7 +59,7 @@ public interface PilotRecordRepository extends JpaRepository<PilotRecord, Long> 
             "    AND (p.import_year * 100 + p.import_month) >= :startPeriod " +
             "    AND (p.import_year * 100 + p.import_month) <= :endPeriod " +
             "    AND (p.source_file IS NULL OR p.source_file != 'KYNTUS_BILLING_ENGINE') " +
-            "    AND UPPER(TRIM(p.dynamic_data->>'Etat')) = 'EN_ATTENTE_VALIDATION_PARTENAIRE' " +
+            "    AND UPPER(TRIM(COALESCE(p.dynamic_data->>'Etat', p.dynamic_data->>'etat', p.dynamic_data->>'ETAT', p.dynamic_data->>'État'))) LIKE '%EN%ATTENTE%VALIDATION%PARTENAIRE%' " +
             ") t WHERE t.rn = 1",
             countQuery = "SELECT COUNT(*) FROM ( " +
                     "  SELECT p.eps_reference " +
@@ -68,7 +68,7 @@ public interface PilotRecordRepository extends JpaRepository<PilotRecord, Long> 
                     "    AND (p.import_year * 100 + p.import_month) >= :startPeriod " +
                     "    AND (p.import_year * 100 + p.import_month) <= :endPeriod " +
                     "    AND (p.source_file IS NULL OR p.source_file != 'KYNTUS_BILLING_ENGINE') " +
-                    "    AND UPPER(TRIM(p.dynamic_data->>'Etat')) = 'EN_ATTENTE_VALIDATION_PARTENAIRE' " +
+                    "    AND UPPER(TRIM(COALESCE(p.dynamic_data->>'Etat', p.dynamic_data->>'etat', p.dynamic_data->>'ETAT', p.dynamic_data->>'État'))) LIKE '%EN%ATTENTE%VALIDATION%PARTENAIRE%' " +
                     "  GROUP BY p.eps_reference " +
                     ") c",
             nativeQuery = true)
@@ -83,7 +83,7 @@ public interface PilotRecordRepository extends JpaRepository<PilotRecord, Long> 
             "AND (import_year * 100 + import_month) >= :startPeriod " +
             "AND (import_year * 100 + import_month) <= :endPeriod " +
             "AND (source_file IS NULL OR source_file != 'KYNTUS_BILLING_ENGINE') " +
-            "AND UPPER(TRIM(dynamic_data->>'Etat')) = 'EN_ATTENTE_VALIDATION_PARTENAIRE'", nativeQuery = true)
+            "AND UPPER(TRIM(COALESCE(dynamic_data->>'Etat', dynamic_data->>'etat', dynamic_data->>'ETAT', dynamic_data->>'État'))) LIKE '%EN%ATTENTE%VALIDATION%PARTENAIRE%'", nativeQuery = true)
     List<String> findDistinctV1ColumnsForExport(
             @Param("category") String category,
             @Param("startPeriod") int startPeriod,
@@ -92,8 +92,7 @@ public interface PilotRecordRepository extends JpaRepository<PilotRecord, Long> 
     // ==========================================================
     // 🧹 THE NUKE (DELETE ALL GENERATED V2)
     // ==========================================================
-    // 🔥 Modifiée bach t-mse7 GHIIR les V2 li generathoum App 2 (KYNTUS_BILLING_ENGINE)
-    // Hadchi kay-protégi les V2 awla V3 li jayin mn App 1 mn l'effacement.
+    // 🔥 Modifiée bach t-mse7 GHIIR les V2 li generathoum App 2
     @Modifying
     @Transactional
     @Query("DELETE FROM PilotRecord p WHERE p.category = :category AND p.importYear = :year AND p.importMonth = :month AND p.sourceFile = 'KYNTUS_BILLING_ENGINE'")
