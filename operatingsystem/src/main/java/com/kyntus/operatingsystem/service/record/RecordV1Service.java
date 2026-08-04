@@ -31,23 +31,21 @@ public class RecordV1Service {
     private final EntityManager entityManager;
 
     public List<String> getAvailableColumns(String category, int year, int month, String version) {
-        // 🔥 FRONTEND V1: Jbed l'colonnes dyal Validation Partenaire
         if ("V1".equalsIgnoreCase(version)) {
-            return repository.findDistinctV1DisplayColumnsFast(category, year, month);
+            return repository.findDistinctV1ColumnsFast(category, year, month);
         }
         return repository.findDistinctDynamicColumnsFast(category, year, month, version);
     }
 
     public Page<PilotRecord> getV1RecordsFiltered(String category, int year, int month, Pageable pageable, List<String> selectedColumns, String version) {
-        // 🔥 FRONTEND V1: Affichi ghir Validation Partenaire
         if ("V1".equalsIgnoreCase(version)) {
-            return repository.findV1DisplayPageable(category, year, month, pageable);
+            return repository.findV1RecordsPageable(category, year, month, pageable);
         }
         return repository.findRecordsByCategoryDateAndVersion(category, year, month, version, pageable);
     }
 
     // ==========================================================
-    // 🔥 MOTEUR D'AUTO-CALCUL MULTI-MOIS (Kay-khdem b'l'Code l'Assli)
+    // 🔥 MOTEUR D'AUTO-CALCUL MULTI-MOIS
     // ==========================================================
     public void calculatePeriod(String category, int startYear, int startMonth, int endYear, int endMonth) {
         int currentYear = startYear;
@@ -69,7 +67,7 @@ public class RecordV1Service {
     }
 
     // ==========================================================
-    // 🔥 ZERO-WRITE EXPORT CSV (Kay-khdem b'l'Code l'Assli)
+    // 🔥 ZERO-WRITE EXPORT CSV
     // ==========================================================
     public byte[] generateCsvExportOnTheFly(String category, int startYear, int startMonth, int endYear, int endMonth) {
         int startPeriod = startYear * 100 + startMonth;
