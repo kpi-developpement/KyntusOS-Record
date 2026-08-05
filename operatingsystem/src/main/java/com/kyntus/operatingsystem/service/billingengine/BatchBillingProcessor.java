@@ -37,22 +37,23 @@ public class BatchBillingProcessor {
 
     @Transactional
     public int processMonthBilling(String category, int year, int month) {
-        log.info("🚀 [ENGINE V3 SUPERSONIC] Démarrage du Batch Turbo pour {} - {}/{}", category, month, year);
+        log.info("🚀 [ENGINE V3 ISOLATION] Démarrage du Batch Sécurisé pour {} - {}/{}", category, month, year);
 
         // ==========================================================
-        // 🧹 THE FIX: FORCED JDBC DELETE WITH LOGGING
+        // 🧹 NETTOYAGE SÉCURISÉ: SUPPRESSION UNIQUEMENT DANS LA TABLE V2
         // ==========================================================
-        log.info("🧹 [ENGINE] Nettoyage : Suppression des fantômes V2 via JDBC...");
-        String sqlDelete = "DELETE FROM pilot_records WHERE UPPER(category) = UPPER(?) AND import_year = ? AND import_month = ? AND UPPER(TRIM(version)) = 'V2'";
+        log.info("🧹 [ENGINE] Nettoyage : Suppression des V2 dans la table isolée (pilot_records_v2)...");
+        String sqlDelete = "DELETE FROM pilot_records_v2 WHERE UPPER(category) = UPPER(?) AND import_year = ? AND import_month = ?";
         int deletedCount = jdbcTemplate.update(sqlDelete, category, year, month);
-        log.info("🗑️ [ENGINE] INFO CRUCIALE: {} lignes V2 ont été supprimées avant le calcul !", deletedCount);
+        log.info("🗑️ [ENGINE] INFO CRUCIALE: {} anciennes lignes V2 ont été supprimées de la table V2 !", deletedCount);
         // ==========================================================
 
         int processedCount = 0;
         int pageNumber = 0;
         Page<PilotRecord> pageData;
 
-        String sqlInsert = "INSERT INTO pilot_records (eps_reference, dynamic_data, version, imported_at, pilot_id, import_year, import_month, category, source_file, file_rank) " +
+        // 🛡️ INSERTION SÉCURISÉE: ECRITURE UNIQUEMENT DANS LA TABLE V2 (Ne touche pas App 1)
+        String sqlInsert = "INSERT INTO pilot_records_v2 (eps_reference, dynamic_data, version, imported_at, pilot_id, import_year, import_month, category, source_file, file_rank) " +
                 "VALUES (?, ?::jsonb, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         log.info("📥 [ENGINE] Lancement du Calcul en Lots de {}...", BATCH_SIZE);
@@ -62,7 +63,7 @@ public class BatchBillingProcessor {
             pageData = repository.findV1RecordsPageable(category, year, month, pageable);
             List<PilotRecord> v1Records = pageData.getContent();
 
-            log.info("🔍 [DEBUG ENGINE] Page {}: Trouvé {} records V1 pour le mois {}", pageNumber, v1Records.size(), month);
+            log.info("🔍 [DEBUG ENGINE] Page {}: Trouvé {} records source pour le mois {}", pageNumber, v1Records.size(), month);
 
             if (v1Records.isEmpty()) {
                 break;
@@ -118,7 +119,7 @@ public class BatchBillingProcessor {
 
         } while (pageData.hasNext());
 
-        log.info("🎯 [ENGINE V3 SUPERSONIC] Fin. {} records V2 générés et insérés en BULK.", processedCount);
+        log.info("🎯 [ENGINE V3 ISOLATION] Fin. {} records V2 générés et insérés avec succès dans la table isolée.", processedCount);
         return processedCount;
     }
 }
