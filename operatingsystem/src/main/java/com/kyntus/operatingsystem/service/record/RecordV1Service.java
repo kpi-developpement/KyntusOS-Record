@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -44,9 +43,6 @@ public class RecordV1Service {
         return repository.findRecordsByCategoryDateAndVersion(category, year, month, version, pageable);
     }
 
-    // ==========================================================
-    // 🔥 MOTEUR D'AUTO-CALCUL MULTI-MOIS
-    // ==========================================================
     public void calculatePeriod(String category, int startYear, int startMonth, int endYear, int endMonth) {
         int currentYear = startYear;
         int currentMonth = startMonth;
@@ -66,16 +62,12 @@ public class RecordV1Service {
         log.info("✅ [AUTO-CALC] Fin des calculs pour la période.");
     }
 
-    // ==========================================================
-    // 🔥 ZERO-WRITE EXPORT CSV (FORMAT EXCEL FR + 2 DECIMALES)
-    // ==========================================================
     public byte[] generateCsvExportOnTheFly(String category, int startYear, int startMonth, int endYear, int endMonth) {
         int startPeriod = startYear * 100 + startMonth;
         int endPeriod = endYear * 100 + endMonth;
 
         log.info("📥 [ZERO-WRITE EXPORT] Démarrage de l'export à la volée pour {} - Période: {} à {}", category, startPeriod, endPeriod);
 
-        // 🔥 THE FIX: Zedna "TOTAL" f l'Export m3a periode w GOULOTTE
         List<String> colonnesEssentielles = Arrays.asList(
                 "periode", "GOULOTTE",
                 "INSTALLATION", "MATERIEL", "MES", "SUPPORT", "LOGISTIQUE", "DEPLACEMENT",
@@ -86,12 +78,11 @@ public class RecordV1Service {
                 "Forfait INST SST", "Prix Forfait SST", "Materiel prix",
                 "MES STT", "Prix Forfait MES SST", "Forfait Logistique SST",
                 "Prix Forfait Logistique SST", "Mt SST",
-                "TOTAL" // <--- Hna fin tzad l'TOTAL
+                "TOTAL"
         );
 
         StringBuilder csv = new StringBuilder();
 
-        // Header
         csv.append("ID;EPS_REFERENCE;CATEGORY;YEAR;MONTH;VERSION;");
         for (String col : colonnesEssentielles) {
             csv.append(col).append(";");
@@ -103,7 +94,8 @@ public class RecordV1Service {
         Page<PilotRecord> pageData;
 
         do {
-            Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("id").ascending());
+            // 🔥 THE FIX: 7iydna Sort.by mn hna
+            Pageable pageable = PageRequest.of(pageNumber, pageSize);
             pageData = repository.findV1RecordsForExportPageable(category, startPeriod, endPeriod, pageable);
 
             for (PilotRecord v1Record : pageData.getContent()) {
@@ -129,11 +121,9 @@ public class RecordV1Service {
                         String valStr = "";
 
                         if (val != null) {
-                            // 🔥 THE FIX EXCEL FR: Format avec virgule + EXACTEMENT 2 chiffres après la virgule
                             if (val instanceof Number) {
                                 valStr = String.format(java.util.Locale.FRENCH, "%.2f", ((Number) val).doubleValue());
                             } else {
-                                // Ila kan texte 3adi
                                 valStr = val.toString().replace(";", ",");
                             }
                         }

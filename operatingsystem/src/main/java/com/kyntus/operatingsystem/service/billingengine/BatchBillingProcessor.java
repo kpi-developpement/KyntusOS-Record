@@ -4,13 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kyntus.operatingsystem.model.PilotRecord;
 import com.kyntus.operatingsystem.repository.PilotRecordRepository;
 import com.kyntus.operatingsystem.service.billingengine.sav.SavRuleEngine;
-import jakarta.persistence.EntityManager; // 🔥 THE FIX: Import dyal EntityManager
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort; // 🔥 THE FIX: Import dyal Sort
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +31,7 @@ public class BatchBillingProcessor {
 
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
-    private final EntityManager entityManager; // 🔥 THE FIX: Injekta l'EntityManager bach n-khewiw l'RAM
+    private final EntityManager entityManager;
 
     private static final int BATCH_SIZE = 10000;
 
@@ -53,10 +52,12 @@ public class BatchBillingProcessor {
         log.info("📥 [ENGINE] Lancement du Calcul en Lots de {}...", BATCH_SIZE);
 
         do {
-            // 🔥 THE FIX 1: Zedna Sort.by("id").ascending() bach PostgreSQL may-zgel 7ta ligne
-            Pageable pageable = PageRequest.of(pageNumber, BATCH_SIZE, Sort.by("id").ascending());
+            // 🔥 THE FIX: 7iydna Sort.by mn hna 7it dernah f l'SQL direct!
+            Pageable pageable = PageRequest.of(pageNumber, BATCH_SIZE);
             pageData = repository.findV1RecordsPageable(category, year, month, pageable);
             List<PilotRecord> v1Records = pageData.getContent();
+
+            log.info("🔍 [DEBUG ENGINE] Page {}: Trouvé {} records V1 (Validation Partenaire) pour le mois {}", pageNumber, v1Records.size(), month);
 
             if (v1Records.isEmpty()) {
                 break;
@@ -109,7 +110,7 @@ public class BatchBillingProcessor {
             batchArgs.clear();
             pageNumber++;
 
-            // 🔥 THE FIX 2: Vider la RAM (Hibernate L1 Cache) bach l'Serveur may-t-khne9ch f 34k lignes
+            // Vider la RAM l'lot jdid
             entityManager.clear();
 
         } while (pageData.hasNext());
