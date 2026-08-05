@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kyntus.operatingsystem.model.PilotRecord;
 import com.kyntus.operatingsystem.repository.PilotRecordRepository;
 import com.kyntus.operatingsystem.service.billingengine.sav.SavRuleEngine;
+import jakarta.persistence.EntityManager; // 🔥 THE FIX: Import dyal EntityManager
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort; // 🔥 THE FIX: Import dyal Sort
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,18 +30,16 @@ public class BatchBillingProcessor {
     private final RaccRuleEngine raccRuleEngine;
     private final SavRuleEngine savRuleEngine;
 
-    // 🔥 THE V8 COMPONENTS: JdbcTemplate l'Insertion d'lber9, w ObjectMapper l'JSONB
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
+    private final EntityManager entityManager; // 🔥 THE FIX: Injekta l'EntityManager bach n-khewiw l'RAM
 
-    // 10,000 par lot bach n-tiriw f da9a we7da!
     private static final int BATCH_SIZE = 10000;
 
     @Transactional
     public int processMonthBilling(String category, int year, int month) {
         log.info("🚀 [ENGINE V3 SUPERSONIC] Démarrage du Batch Turbo pour {} - {}/{}", category, month, year);
 
-        // 1. NUKE OLD V2 DATA
         log.info("🧹 [ENGINE] Nettoyage : Suppression des fantômes V2...");
         repository.deleteOldV2Records(category, year, month);
 
@@ -47,14 +47,14 @@ public class BatchBillingProcessor {
         int pageNumber = 0;
         Page<PilotRecord> pageData;
 
-        // 🔥 THE RAW SQL INSERT (Kay-By-passi Hibernate 100%)
         String sqlInsert = "INSERT INTO pilot_records (eps_reference, dynamic_data, version, imported_at, pilot_id, import_year, import_month, category, source_file, file_rank) " +
                 "VALUES (?, ?::jsonb, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         log.info("📥 [ENGINE] Lancement du Calcul en Lots de {}...", BATCH_SIZE);
 
         do {
-            Pageable pageable = PageRequest.of(pageNumber, BATCH_SIZE);
+            // 🔥 THE FIX 1: Zedna Sort.by("id").ascending() bach PostgreSQL may-zgel 7ta ligne
+            Pageable pageable = PageRequest.of(pageNumber, BATCH_SIZE, Sort.by("id").ascending());
             pageData = repository.findV1RecordsPageable(category, year, month, pageable);
             List<PilotRecord> v1Records = pageData.getContent();
 
@@ -77,10 +77,8 @@ public class BatchBillingProcessor {
                         v2Data = v1.getDynamicData();
                     }
 
-                    // N-7ouwlou l'Map l'JSON String bach t-dkhol nishan f l'Colonne JSONB dyal PostgreSQL
                     String dynamicDataJson = objectMapper.writeValueAsString(v2Data);
 
-                    // N-wejdou Sster l'SQL
                     batchArgs.add(new Object[] {
                             v1.getEpsReference(),
                             dynamicDataJson,
@@ -99,7 +97,6 @@ public class BatchBillingProcessor {
                 }
             }
 
-            // 🔥 BATCH INSERT: Tiri 10,000 ligne f d99a we7da b l'JDBC l'assli!
             long startTime = System.currentTimeMillis();
             jdbcTemplate.batchUpdate(sqlInsert, batchArgs);
             long endTime = System.currentTimeMillis();
@@ -109,9 +106,11 @@ public class BatchBillingProcessor {
             log.info("⚡ [ENGINE] Lot {} terminé ({} lignes insérées en {} ms). Total calculé: {}",
                     (pageNumber + 1), batchArgs.size(), (endTime - startTime), processedCount);
 
-            // 🧹 N-khewiw l'RAM l'lot jdid
             batchArgs.clear();
             pageNumber++;
+
+            // 🔥 THE FIX 2: Vider la RAM (Hibernate L1 Cache) bach l'Serveur may-t-khne9ch f 34k lignes
+            entityManager.clear();
 
         } while (pageData.hasNext());
 
