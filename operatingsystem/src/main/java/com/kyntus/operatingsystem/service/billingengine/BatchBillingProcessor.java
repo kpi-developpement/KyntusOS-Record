@@ -39,8 +39,14 @@ public class BatchBillingProcessor {
     public int processMonthBilling(String category, int year, int month) {
         log.info("🚀 [ENGINE V3 SUPERSONIC] Démarrage du Batch Turbo pour {} - {}/{}", category, month, year);
 
-        log.info("🧹 [ENGINE] Nettoyage : Suppression des fantômes V2...");
-        repository.deleteOldV2Records(category, year, month);
+        // ==========================================================
+        // 🧹 THE FIX: FORCED JDBC DELETE WITH LOGGING
+        // ==========================================================
+        log.info("🧹 [ENGINE] Nettoyage : Suppression des fantômes V2 via JDBC...");
+        String sqlDelete = "DELETE FROM pilot_records WHERE UPPER(category) = UPPER(?) AND import_year = ? AND import_month = ? AND UPPER(TRIM(version)) = 'V2'";
+        int deletedCount = jdbcTemplate.update(sqlDelete, category, year, month);
+        log.info("🗑️ [ENGINE] INFO CRUCIALE: {} lignes V2 ont été supprimées avant le calcul !", deletedCount);
+        // ==========================================================
 
         int processedCount = 0;
         int pageNumber = 0;
@@ -52,7 +58,6 @@ public class BatchBillingProcessor {
         log.info("📥 [ENGINE] Lancement du Calcul en Lots de {}...", BATCH_SIZE);
 
         do {
-            // 🔥 THE FIX: 7iydna Sort.by mn hna 7it dernah f l'SQL direct!
             Pageable pageable = PageRequest.of(pageNumber, BATCH_SIZE);
             pageData = repository.findV1RecordsPageable(category, year, month, pageable);
             List<PilotRecord> v1Records = pageData.getContent();
@@ -109,8 +114,6 @@ public class BatchBillingProcessor {
 
             batchArgs.clear();
             pageNumber++;
-
-            // Vider la RAM l'lot jdid
             entityManager.clear();
 
         } while (pageData.hasNext());
