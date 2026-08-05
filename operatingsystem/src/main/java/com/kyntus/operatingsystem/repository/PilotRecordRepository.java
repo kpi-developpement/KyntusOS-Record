@@ -86,10 +86,10 @@ public interface PilotRecordRepository extends JpaRepository<PilotRecord, Long> 
             @Param("endPeriod") int endPeriod);
 
     // ==========================================================
-    // 🧹 THE NUKE (DELETE ALL V2 FOR THIS PERIOD - ENGINE OR MANUAL)
+    // 🧹 THE NUKE (DELETE ALL V2 - FORCED NATIVE DB CLEAR)
     // ==========================================================
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Transactional
-    @Query("DELETE FROM PilotRecord p WHERE p.category = :category AND p.importYear = :year AND p.importMonth = :month AND UPPER(TRIM(p.version)) = 'V2'")
+    @Query(value = "DELETE FROM pilot_records WHERE category = :category AND import_year = :year AND import_month = :month AND UPPER(TRIM(version)) = 'V2'", nativeQuery = true)
     void deleteOldV2Records(@Param("category") String category, @Param("year") int year, @Param("month") int month);
 }
