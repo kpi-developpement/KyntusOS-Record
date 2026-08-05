@@ -24,12 +24,11 @@ public class RaccRuleEngine {
         double valAA = getDoubleFlexible(existingData, "SUPPORT");     // AA
         double valAB = getDoubleFlexible(existingData, "LOGISTIQUE");  // AB
 
-        // --- LOOKUPS (RECHERCHEV) ---
-        // F l'Excel derti RECHERCHEV 3la X, AA, AB, Z
-        BpuEntry inst = bpuCache.lookupByPrice(valX, "INST");
-        BpuEntry sup = bpuCache.lookupByPrice(valAA, "INST");
-        BpuEntry logEntry = bpuCache.lookupByPrice(valAB, "INST");
-        BpuEntry mes = bpuCache.lookupByPrice(valZ, "MES");
+        // --- LOOKUPS SAFE (RECHERCHEV Avec Protection Anti-Null) ---
+        BpuEntry inst = getSafeBpuEntry(bpuCache.lookupByPrice(valX, "INST"));
+        BpuEntry sup = getSafeBpuEntry(bpuCache.lookupByPrice(valAA, "INST"));
+        BpuEntry logEntry = getSafeBpuEntry(bpuCache.lookupByPrice(valAB, "INST"));
+        BpuEntry mes = getSafeBpuEntry(bpuCache.lookupByPrice(valZ, "MES"));
 
         // =========================================================
         // 📊 COLONNES KYNTUS (AI -> AR) -- Identique l'Excel dyalek
@@ -38,7 +37,7 @@ public class RaccRuleEngine {
         // AI : =RECHERCHEV(X2,'BPU RACC'!D:E,2,FAUX)
         processedData.put("Forfait INST Kyntus", inst.getCodeForfait());
 
-        // AJ : =RECHERCHEV(AI2,'BPU RACC'!C:D,2,FAUX)  (C'est l'équivalent dyal Prix Kyntus d l'Installation)
+        // AJ : =RECHERCHEV(AI2,'BPU RACC'!C:D,2,FAUX)
         processedData.put("Prix forfait INST Kyntus", inst.getPrixKyntus());
 
         // AK : =RECHERCHEV(AA2,'BPU RACC'!D:E,2,FAUX)
@@ -104,10 +103,26 @@ public class RaccRuleEngine {
         return processedData;
     }
 
+    /**
+     * Helper bach y-éviter l'NullPointerException si le BPU ne contient pas le prix.
+     */
+    private BpuEntry getSafeBpuEntry(BpuEntry entry) {
+        if (entry != null) {
+            return entry;
+        }
+        // Fallback vide au cas où le lookup retourne null
+        BpuEntry dummy = new BpuEntry();
+        dummy.setCodeForfait("-");
+        dummy.setPrixKyntus(0.0);
+        dummy.setPrixSst(0.0);
+        return dummy;
+    }
+
     private double getDoubleFlexible(Map<String, Object> data, String targetKey) {
+        if (data == null || targetKey == null) return 0.0;
         String cleanTarget = targetKey.trim().toLowerCase();
         for (Map.Entry<String, Object> entry : data.entrySet()) {
-            if (entry.getKey().trim().toLowerCase().equals(cleanTarget)) {
+            if (entry.getKey() != null && entry.getKey().trim().toLowerCase().equals(cleanTarget)) {
                 Object val = entry.getValue();
                 if (val == null || val.toString().trim().isEmpty()) return 0.0;
                 try {
