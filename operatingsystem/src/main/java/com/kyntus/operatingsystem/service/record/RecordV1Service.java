@@ -75,7 +75,7 @@ public class RecordV1Service {
 
         log.info("📥 [ZERO-WRITE EXPORT] Démarrage de l'export à la volée pour {} - Période: {} à {}", category, startPeriod, endPeriod);
 
-        // 🔥 THE FIX: Zedna "periode" w "GOULOTTE" f l'Export
+        // 🔥 THE FIX: Zedna "TOTAL" f l'Export m3a periode w GOULOTTE
         List<String> colonnesEssentielles = Arrays.asList(
                 "periode", "GOULOTTE",
                 "INSTALLATION", "MATERIEL", "MES", "SUPPORT", "LOGISTIQUE", "DEPLACEMENT",
@@ -85,7 +85,8 @@ public class RecordV1Service {
                 "Materiel prix2", "MES22 Kyntus", "Prix Forfait MES Kyntus", "Mt Kyntus",
                 "Forfait INST SST", "Prix Forfait SST", "Materiel prix",
                 "MES STT", "Prix Forfait MES SST", "Forfait Logistique SST",
-                "Prix Forfait Logistique SST", "Mt SST"
+                "Prix Forfait Logistique SST", "Mt SST",
+                "TOTAL" // <--- Hna fin tzad l'TOTAL
         );
 
         StringBuilder csv = new StringBuilder();
@@ -132,7 +133,7 @@ public class RecordV1Service {
                             if (val instanceof Number) {
                                 valStr = String.format(java.util.Locale.FRENCH, "%.2f", ((Number) val).doubleValue());
                             } else {
-                                // Ila kan texte 3adi (b7al GOULOTTE awla periode)
+                                // Ila kan texte 3adi
                                 valStr = val.toString().replace(";", ",");
                             }
                         }
