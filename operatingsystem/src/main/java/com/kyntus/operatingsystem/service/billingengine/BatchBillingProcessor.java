@@ -62,7 +62,7 @@ public class BatchBillingProcessor {
             pageData = repository.findV1RecordsPageable(category, year, month, pageable);
             List<PilotRecord> v1Records = pageData.getContent();
 
-            log.info("🔍 [DEBUG ENGINE] Page {}: Trouvé {} records V1 (Validation Partenaire) pour le mois {}", pageNumber, v1Records.size(), month);
+            log.info("🔍 [DEBUG ENGINE] Page {}: Trouvé {} records V1 pour le mois {}", pageNumber, v1Records.size(), month);
 
             if (v1Records.isEmpty()) {
                 break;
